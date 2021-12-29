@@ -12,7 +12,7 @@ const gatewayPath = "/gateway";
 
 // TODO: Implement resume connection feature in case of failures.
 const ws = new WebSocket(baseWebsocketUrl);
-const token = "OTI0Njc3OTE4MzUxODQ3NDM1.YciDaw.V-hrw_4MNeSHdeeBoE1Hpa2VZzA";
+const token = process.argv[2];
 
 const telegramBotToken = '5012802656:AAEfnQ3YQMxfeOK75G-UdaZrW6NZ7v5Otmg';
 
