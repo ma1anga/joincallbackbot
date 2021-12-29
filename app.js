@@ -14,7 +14,7 @@ const gatewayPath = "/gateway";
 const ws = new WebSocket(baseWebsocketUrl);
 const token = process.argv[2];
 
-const telegramBotToken = '5012802656:AAEfnQ3YQMxfeOK75G-UdaZrW6NZ7v5Otmg';
+const telegramBotToken = process.argv[3];
 
 const inviteLink =
   "https://discord.com/api/oauth2/authorize?client_id=924677918351847435&scope=bot&permissions=1024";
