@@ -1,18 +1,19 @@
 import WebSocket from "ws";
-import * as https from "https";
 import fetch from "node-fetch";
+
+const EVENT_NAMES = {
+  VOICE_STATE_UPDATE: "VOICE_STATE_UPDATE",
+  READY: "READY",
+};
 
 const baseUrl = "https://discord.com/api";
 const baseWebsocketUrl = "wss://gateway.discord.gg/?v=9&encoding=json";
 
 const gatewayPath = "/gateway";
 
-// const response = await fetch(baseUrl + gatewayPath);
-// const data = await response.json();
 
-// TODO: Implement resume connection feature in case of failures.
 const ws = new WebSocket(baseWebsocketUrl);
-const token = process.argv[2];
+const discordToken = process.argv[2];
 
 const telegramBotToken = process.argv[3];
 
@@ -24,13 +25,12 @@ const heartbeat = {
   d: null,
 };
 
-let pingInterval = 0;
-let intervalId;
+let sessionId = null;
 
 const identifyPayload = {
   op: 2,
   d: {
-    token: token,
+    token: discordToken,
     intents: 128,
     properties: {
       $os: "linux",
@@ -42,15 +42,38 @@ const identifyPayload = {
 
 ws.on("message", function message(data) {
   const payload = JSON.parse(data);
-  const { op: opcode, d: eventData, s: sequenceNumber } = payload;
+  const { op: opcode, d: eventData, s: sequenceNumber, t: eventName } = payload;
 
   console.log("Message received", payload);
 
   switch (opcode) {
     case 0:
-      fetch(getTokenizedQuery("https://api.telegram.org/bot$/sendMessage?chat_id=362089091&text=Voice channel state update"));
+      switch (eventName) {
+        case EVENT_NAMES.READY:
+          sessionId = eventData.session_id;
+          break;
+        case EVENT_NAMES.VOICE_STATE_UPDATE:
+          fetch(
+            getTokenizedQuery(
+              "https://api.telegram.org/bot$/sendMessage?chat_id=362089091&text=Voice channel state update"
+            )
+          );
+          break;
+        default:
+          console.log("Unknown eventName", eventName);
+      }
     case 1:
       sendHeartbeat();
+      break;
+    case 7:
+      ws.send({
+        op: 6,
+        d: {
+          token: discordToken,
+          session_id: sessionId,
+          seq: heartbeat.d,
+        },
+      });
       break;
     case 10:
       processHelloMessage(eventData);
@@ -66,10 +89,6 @@ ws.on("message", function message(data) {
 });
 
 const processHelloMessage = (eventData) => {
-  console.log("Hello message processed", eventData);
-
-  pingInterval = eventData.heartbeat_interval;
-
   setInterval(sendHeartbeat, eventData.heartbeat_interval);
 };
 
@@ -83,6 +102,6 @@ const sendHeartbeat = () => {
   console.log("Heartbeat sent", heartbeat);
 };
 
-const getTokenizedQuery = query => {
+const getTokenizedQuery = (query) => {
   return query.replace("$", telegramBotToken);
-}
+};
