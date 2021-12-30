@@ -1,2 +1,4 @@
 node_modules/
 src/telegram-loc.js
+response-join-loc.json
+response-leave-loc.json
