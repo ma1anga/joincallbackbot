@@ -46,14 +46,14 @@ const onWebsocketMessage = (payload) => {
 };
 
 const processReconnectMessage = () => {
-  ws.send({
+  ws.send(JSON.stringify({
     op: 6,
     d: {
       token: discordToken,
       session_id: sessionId,
       seq: heartbeat.d,
     },
-  });
+  }));
 };
 
 const processMessageDispatch = (eventData, eventName) => {
