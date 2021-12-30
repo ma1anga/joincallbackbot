@@ -1,0 +1,26 @@
+{
+  "member": {
+    "user": {
+      "username": "malanga",
+      "id": "536959382144155658",
+      "discriminator": "4341",
+      "avatar": "75fe86d05587aac7a54c56153f82bd35"
+    },
+    "roles": [],
+    "mute": false,
+    "joined_at": "2021-12-29T23:51:30.542000+00:00",
+    "hoisted_role": null,
+    "deaf": false
+  },
+  "user_id": "536959382144155658",
+  "suppress": false,
+  "session_id": "a6c8c92e52f66f4e2687713cd9bb4aae",
+  "self_video": false,
+  "self_mute": false,
+  "self_deaf": false,
+  "request_to_speak_timestamp": null,
+  "mute": false,
+  "guild_id": "925898859761250384",
+  "deaf": false,
+  "channel_id": null
+}

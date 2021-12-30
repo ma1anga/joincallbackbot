@@ -1,0 +1,4 @@
+export const EVENT_NAMES = {
+    VOICE_STATE_UPDATE: "VOICE_STATE_UPDATE",
+    READY: "READY",
+};
