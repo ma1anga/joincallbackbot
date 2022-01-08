@@ -1,14 +1,14 @@
 import WebSocket from "ws";
 import fetch from "node-fetch";
 import { baseWebsocketUrl, telegramBaseUrl } from "./utils/requestUtils.js";
-import { EVENT_NAMES } from "./utils/websocketUtils.js";
+import { EVENT_NAMES, OPCODE } from "./utils/websocketUtils.js";
 
 const discordToken = process.argv[2];
 const telegramBotToken = process.argv[3];
 
 const telegramChatIds = ["362089091"];
 
-const ws = new WebSocket(baseWebsocketUrl);
+let ws = new WebSocket(baseWebsocketUrl);
 
 const heartbeat = {
   op: 1,
@@ -24,16 +24,19 @@ const onWebsocketMessage = (payload) => {
   console.log("Message received", payload);
 
   switch (opcode) {
-    case 0:
+    case OPCODE.DISPATCH:
       processMessageDispatch(eventData, eventName);
       break;
-    case 1:
+    case OPCODE.HEARTBEAT:
       sendHeartbeat();
       break;
-    case 7:
+    case OPCODE.RECONNECT:
       processReconnectMessage();
       break;
-    case 10:
+    case OPCODE.INVALID_SESSION:
+      identify();
+      break;  
+    case OPCODE.HELLO:
       processHelloMessage(eventData);
       break;
     default:
@@ -46,6 +49,9 @@ const onWebsocketMessage = (payload) => {
 };
 
 const processReconnectMessage = () => {
+  ws.close();
+  ws = new WebSocket(baseWebsocketUrl);
+
   ws.send(JSON.stringify({
     op: 6,
     d: {

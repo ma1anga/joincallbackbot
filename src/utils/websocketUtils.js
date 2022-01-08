@@ -2,3 +2,11 @@ export const EVENT_NAMES = {
     VOICE_STATE_UPDATE: "VOICE_STATE_UPDATE",
     READY: "READY",
 };
+
+export const OPCODE = {
+    DISPATCH: 0,
+    HEARTBEAT: 1,
+    RECONNECT: 7,
+    INVALID_SESSION: 9,
+    HELLO: 10
+}
