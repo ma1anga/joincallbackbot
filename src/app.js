@@ -8,7 +8,7 @@ const telegramBotToken = process.argv[3];
 
 const telegramChatIds = ["362089091"];
 
-let ws = new WebSocket(baseWebsocketUrl);
+let ws;
 
 const heartbeat = {
   op: 1,
@@ -17,7 +17,10 @@ const heartbeat = {
 
 let sessionId = null;
 
-ws.on("message", (body) => onWebsocketMessage(JSON.parse(body)));
+const initializeConnection = () => {
+  ws = new WebSocket(baseWebsocketUrl);
+  ws.on("message", (body) => onWebsocketMessage(JSON.parse(body)));
+}
 
 const onWebsocketMessage = (payload) => {
   const { op: opcode, d: eventData, s: sequenceNumber, t: eventName } = payload;
@@ -50,7 +53,7 @@ const onWebsocketMessage = (payload) => {
 
 const processReconnectMessage = () => {
   ws.close();
-  ws = new WebSocket(baseWebsocketUrl);
+  initializeConnection();
 
   ws.send(JSON.stringify({
     op: 6,
@@ -123,3 +126,6 @@ const processVoiceStateUpdate = (eventData) => {
 const getTokenizedQuery = (query) => {
   return query.replace("$", telegramBotToken);
 };
+
+
+initializeConnection();
