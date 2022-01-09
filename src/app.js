@@ -15,11 +15,19 @@ const heartbeat = {
   d: null,
 };
 
-let sessionId = null;
+let sessionId;
+let heartbeatIntervalId;
 
 const initializeConnection = () => {
   ws = new WebSocket(baseWebsocketUrl);
+  
+  console.log("Websocket initialized.", ws);
+
   ws.on("message", (body) => onWebsocketMessage(JSON.parse(body)));
+  ws.on("close", () => {
+    console.log("Close event fired!");
+    clearInterval(heartbeatIntervalId)
+  })
 }
 
 const onWebsocketMessage = (payload) => {
@@ -79,7 +87,7 @@ const processMessageDispatch = (eventData, eventName) => {
 };
 
 const processHelloMessage = (eventData) => {
-  setInterval(sendHeartbeat, eventData.heartbeat_interval);
+  heartbeatIntervalId = setInterval(sendHeartbeat, eventData.heartbeat_interval);
   identify();
 };
 
