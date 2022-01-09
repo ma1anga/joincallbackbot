@@ -1,6 +1,12 @@
 import WebSocket from "ws";
 import fetch from "node-fetch";
-import { baseWebsocketUrl, telegramBaseUrl } from "./utils/requestUtils.js";
+import {
+  baseWebsocketUrl,
+  telegramBaseUrl,
+  discordBaseUrl,
+  getGuildById,
+  getGuildChannels,
+} from "./utils/requestUtils.js";
 import { EVENT_NAMES, OPCODE } from "./utils/websocketUtils.js";
 
 const discordToken = process.argv[2];
@@ -22,7 +28,7 @@ const initializeConnection = () => {
   ws = new WebSocket(baseWebsocketUrl);
 
   ws.on("message", (body) => onWebsocketMessage(JSON.parse(body)));
-}
+};
 
 const onWebsocketMessage = (payload) => {
   const { op: opcode, d: eventData, s: sequenceNumber, t: eventName } = payload;
@@ -40,7 +46,7 @@ const onWebsocketMessage = (payload) => {
       break;
     case OPCODE.INVALID_SESSION:
       identify();
-      break;  
+      break;
     case OPCODE.HELLO:
       processHelloMessage(eventData);
       break;
@@ -57,15 +63,6 @@ const processReconnectMessage = () => {
   clearInterval(heartbeatIntervalId);
   ws.close();
   initializeConnection();
-
-  // ws.send(JSON.stringify({
-  //   op: 6,
-  //   d: {
-  //     token: discordToken,
-  //     session_id: sessionId,
-  //     seq: heartbeat.d,
-  //   },
-  // }));
 };
 
 const processMessageDispatch = (eventData, eventName) => {
@@ -82,7 +79,10 @@ const processMessageDispatch = (eventData, eventName) => {
 };
 
 const processHelloMessage = (eventData) => {
-  heartbeatIntervalId = setInterval(sendHeartbeat, eventData.heartbeat_interval);
+  heartbeatIntervalId = setInterval(
+    sendHeartbeat,
+    eventData.heartbeat_interval
+  );
   identify();
 };
 
@@ -110,25 +110,34 @@ const sendHeartbeat = () => {
 };
 
 const processVoiceStateUpdate = (eventData) => {
-  let messageContent = eventData.member.user.username + " ";
-  if (eventData.channel_id) {
-    messageContent += "joined voice channel";
-  } else {
-    messageContent += "leaved voice channel";
-  }
+  Promise.all([
+    getGuildById(eventData.guild_id),
+    getGuildChannels(eventData.guild_id),
+  ]).then((response) => {
+    const guildName = response[0].name;
+    const channelName = response[1].find(
+      (ch) => ch.id == eventData.channel_id
+    )?.name;
 
-  telegramChatIds.forEach((id) =>
-    fetch(
-      getTokenizedQuery(
-        `${telegramBaseUrl}/sendMessage?chat_id=${id}&text=${messageContent}`
+    let messageContent = eventData.member.user.username + " ";
+    if (channelName) {
+      messageContent += `joined the \"${channelName}\" voice channel.\n Server: ${guildName}`;
+    } else {
+      messageContent += `leaved voice channel.\n Server: ${guildName}`;
+    }
+
+    telegramChatIds.forEach((id) =>
+      fetch(
+        getTokenizedQuery(
+          `${telegramBaseUrl}/sendMessage?chat_id=${id}&text=${messageContent}`
+        )
       )
-    )
-  );
+    );
+  });
 };
 
 const getTokenizedQuery = (query) => {
   return query.replace("$", telegramBotToken);
 };
-
 
 initializeConnection();
